@@ -1,0 +1,26 @@
+# Virtual environment
+venv/
+
+# Model files and large data
+mlmodel/model.pth
+mlmodel/tokenizer/
+train_checkpoint/checkpoint.pth
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.Python
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
