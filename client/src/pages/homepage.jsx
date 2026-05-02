@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useState} from "react";
 
 export default function Homepage() {
+  const [fileUpload, setFileUpload] = useState(false);
   return (
     <>
       <main className="pt-24 min-h-screen">
@@ -46,10 +47,10 @@ export default function Homepage() {
                       <circle className="text-surface-container-high" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" strokeWidth="8"></circle>
                       <circle className="drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" cx="96" cy="96" fill="transparent" r="80" stroke="url(#gradient)" strokeDasharray="502" strokeDashoffset="75" strokeLinecap="round" strokeWidth="12"></circle>
                       <defs>
-                        <lineargradient id="gradient" x1="0%" x2="100%" y1="0%" y2="0%">
+                        <linearGradient id="gradient" x1="0%" x2="100%" y1="0%" y2="0%">
                           <stop offset="0%" stopColor="#3b82f6"></stop>
                           <stop offset="100%" stopColor="#9333ea"></stop>
-                        </lineargradient>
+                        </linearGradient>
                       </defs>
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -66,39 +67,9 @@ export default function Homepage() {
           </div>
         </section>
         {/* Main Tool Area */}
-        <section className="px-8 py-16 bg-surface-container-lowest">
-          <div className="max-w-5xl mx-auto">
-            <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="flex border-b border-white/5 bg-white/5 px-6 py-4 justify-between items-center">
-                <div className="flex gap-4">
-                  <button className="font-label-caps text-label-caps text-primary border-b-2 border-primary pb-1">Paste Text</button>
-                  <button className="font-label-caps text-label-caps text-on-surface-variant hover:text-white transition-colors">Upload File</button>
-                </div>
-                <div className="flex gap-2">
-                  <span className="w-3 h-3 rounded-full bg-error/40"></span>
-                  <span className="w-3 h-3 rounded-full bg-tertiary/40"></span>
-                  <span className="w-3 h-3 rounded-full bg-primary/40"></span>
-                </div>
-              </div>
-              <div className="p-1">
-                <textarea className="w-full h-80 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/50 text-on-surface font-body-md text-body-md p-8 placeholder:text-outline transition-all duration-300 resize-none" placeholder="Enter the text you want to analyze..."></textarea>
-              </div>
-              <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
-                <div className="flex items-center gap-4 text-outline font-body-sm">
-                  <span>Words: 0 / 25000</span>
-                  <span className="w-px h-4 bg-white/10"></span>
-                  <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
-                    <span className="material-symbols-outlined text-sm" data-icon="cloud_upload">cloud_upload</span>
-                    <span>Drop PDF or DOCX here</span>
-                  </div>
-                </div>
-                <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow">
-                  Analyze Text
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
+        {
+          fileUpload ? <FileMainToolArea setFileUpload = {setFileUpload}/> : <TextMainToolArea setFileUpload={setFileUpload}/>
+        }
         {/* How It Works Section */}
         <section className="px-8 py-24 bg-surface-dim">
           <div className="max-w-screen-2xl mx-auto">
@@ -140,7 +111,7 @@ export default function Homepage() {
             </div>
           </div>
         </section>
-        {/* Call to Action Section */}  
+        {/* Call to Action Section */}
         <section className="px-8 py-24">
           <div className="max-w-4xl mx-auto glass-panel p-12 rounded-3xl border border-primary/20 text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
@@ -166,4 +137,89 @@ export default function Homepage() {
       </main>
     </>
   );
+}
+
+function TextMainToolArea({setFileUpload}) {
+  return (
+    <>
+      <section className="px-8 py-16 bg-surface-container-lowest">
+        <div className="max-w-5xl mx-auto">
+          <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="flex border-b border-white/5 bg-white/5 px-6 py-4 justify-between items-center">
+              <div className="flex gap-4">
+                <button className="font-label-caps text-label-caps hover:text-white transition-colors text-primary border-b-2 border-primary pb-1" onClick={() => setFileUpload(false)}>
+                  Paste Text
+                </button>
+                <button className="font-label-caps text-label-caps text-on-surface-variant hover:text-white transition-colors" onClick={() => setFileUpload(true)}>
+                  Upload File
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <span className="w-3 h-3 rounded-full bg-error/40"></span>
+                <span className="w-3 h-3 rounded-full bg-tertiary/40"></span>
+                <span className="w-3 h-3 rounded-full bg-primary/40"></span>
+              </div>
+            </div>
+            <div className="p-1">
+              <textarea className="w-full h-80 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/50 text-on-surface font-body-md text-body-md p-8 placeholder:text-outline transition-all duration-300 resize-none" placeholder="Enter the text you want to analyze..."></textarea>
+            </div>
+            <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
+              <div className="flex items-center gap-4 text-outline font-body-sm">
+                <span>Words: 0 / 25000</span>
+                <span className="w-px h-4 bg-white/10"></span>
+                <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
+                  <span className="material-symbols-outlined text-sm" data-icon="cloud_upload">cloud_upload</span>
+                  <span>Drop PDF or DOCX here</span>
+                </div>
+              </div>
+              <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow">
+                Analyze Text
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function FileMainToolArea({setFileUpload}) {
+  return (
+    <>
+      <section className="px-8 py-16 bg-surface-container-lowest">
+        <div className="max-w-5xl mx-auto">
+          <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="flex border-b border-white/5 bg-white/5 px-6 py-4 justify-between items-center">
+              <div className="flex gap-4">
+                <button className="font-label-caps text-label-caps text-on-surface-variant hover:text-white transition-colors" onClick = {() => setFileUpload(false)}>Paste Text</button>
+                <button className="font-label-caps text-label-caps hover:text-white transition-colors text-primary border-b-2 border-primary pb-1" onClick={()=>setFileUpload(true)}>Upload File</button>
+              </div>
+              <div className="flex gap-2">
+                <span className="w-3 h-3 rounded-full bg-error/40"></span>
+                <span className="w-3 h-3 rounded-full bg-tertiary/40"></span>
+                <span className="w-3 h-3 rounded-full bg-primary/40"></span>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="w-full h-80 bg-surface-container-low/50 border-2 border-dashed border-primary/30 rounded-xl flex flex-col items-center justify-center gap-6 group hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 cursor-pointer">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all"></div>
+                  <span className="material-symbols-outlined text-4xl text-primary relative z-10">cloud_upload</span>
+                </div>
+                <div className="text-center">
+                  <p className="font-h3 text-h3 text-on-background mb-2">Drag &amp; drop files here or <span className="text-primary">click to browse</span></p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">Supported formats: PDF, DOCX, TXT (Max 25MB)</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
+              <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow">
+                Analyze Text
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  )
 }
