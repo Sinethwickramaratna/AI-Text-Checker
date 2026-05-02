@@ -1,22 +1,33 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
 from mlmodel.model import AITextIdentificationModel
-import pandas as pd
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
-import os
 
-def main():
-	model = AITextIdentificationModel()
-	model.load_model()
+app = FastAPI()
 
-	texts = input("Enter text to classify: ")
-	while texts.lower() != 'exit':
-		proba = model.predict_proba(texts)
-		label = "AI-Generated" if proba['ai'] > 0.5 else "Human-Written"
-		print(f"Predicted Label: {label} (AI Probability: {proba['ai']:.4f})")
-		texts = input("Enter text to classify (or 'exit' to quit): ")
-	
+model = AITextIdentificationModel()
+model.load_model()
 
+class TextInput(BaseModel):
+	text: str
 
+@app.get("/")
+def home():
+	return {"message": "Welcome to the AI Text Checker API!"}
 
- 
-if __name__ == "__main__":
-	main()
+@app.post("/analyze")
+def analyze_text(request: TextInput):
+	print(request)
+	text = request.text
+	# Placeholder for text analysis logic
+
+	words = text.split()
+	word_count = len(words)
+
+	probabilities = model.predict_proba(text)
+
+	return{
+		'probabilities': probabilities,
+		'length': len(text),
+		'word_count': word_count,
+		'status': 'Success',
+	}
