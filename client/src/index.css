@@ -10,6 +10,7 @@
 
 .text-gradient {
   background: linear-gradient(to right, #3b82f6, #9333ea);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -27,6 +28,7 @@
 
 .gradient-text {
   background: linear-gradient(to right, #60a5fa, #a855f7);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -34,4 +36,23 @@
 .process-line {
   background: linear-gradient(to right, #3b82f6, #8b5cf6, #3b82f6);
   background-size: 200% 100%;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.glass-card {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.inner-glow {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.neon-glow-primary {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
