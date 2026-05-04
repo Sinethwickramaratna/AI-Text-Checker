@@ -23,7 +23,7 @@ print("🔑 Hugging Face Token Loaded:", bool(token))
 model_name = os.getenv("HUGGINGFACEHUB_MODEL_NAME")
 
 class AITextIdentificationModel:
-  def __init__(self):
+  def __init__(self, epochs=3, max_len=128, batch_size=32, lr=2e-5, weight=None):
     torch.manual_seed(42)
     np.random.seed(42)
 
@@ -34,14 +34,15 @@ class AITextIdentificationModel:
 
     self.model = None
     self.tokenizer = None
+    self.batch_size = batch_size
+    self.epochs = epochs
+    self.max_len = max_len
+    self.lr = lr
+    self.weight = weight
     self.optimizer = None
-    self.batch_size = None
-    self.epochs = None
-    self.max_len = None
-    self.lr = None
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-  def load_model(self, for_training=False):
+  def load_model(self):
     self.model = BERTClassifier()
     
     model_path = hf_hub_download(
@@ -60,19 +61,13 @@ class AITextIdentificationModel:
     self.model.to(self.device)
     self.model.eval()
 
-    self.batch_size = model_data['batch_size']
-    self.epochs = model_data['epoch']
-    self.max_len = model_data['max_len']
-    self.lr = model_data['lr']
-
-    if for_training:
-      self.optimizer = AdamW(self.model.parameters(), lr=self.lr)
-      try:
-        self.optimizer.load_state_dict(model_data['optimizer'])
-      except:
-        print("⚠️ Optimizer state not loaded (skipping)")
-      
-
+    #self.batch_size = model_data['batch_size']
+    #self.epochs = model_data['epoch']
+    #self.max_len = model_data['max_len']
+    #self.lr = model_data['lr']
+    
+    self.optimizer = AdamW(self.model.parameters(), lr=self.lr)
+    
     self.tokenizer = AutoTokenizer.from_pretrained(model_name, subfolder="tokenizer")
     print("✅ Model loaded from Hugging Face Hub successfully.")
 
@@ -104,7 +99,7 @@ class AITextIdentificationModel:
 
         api.upload_folder(
             folder_path=tmpdir,
-            repo_folder="tokenizer",
+            path_in_repo="tokenizer",
             repo_id=model_name,
             repo_type="model",
         )
@@ -113,15 +108,12 @@ class AITextIdentificationModel:
 
     print("✅ Model saved to Hugging Face Hub successfully.")
 
-  def fit(self, X_train, y_train, weight=None, epochs=None, batch_size=None):
+  def fit(self, X_train, y_train, resume=False):
     if self.model is None:
       raise ValueError("Model not loaded. Call load_model() first.")
     
     if self.optimizer is None:
       self.optimizer = AdamW(self.model.parameters(), lr=self.lr)
-
-    self.epochs = epochs if epochs is not None else self.epochs
-    self.batch_size = batch_size if batch_size is not None else self.batch_size
     
     X_train = X_train.to_numpy()
     y_train = y_train.to_numpy()
@@ -147,7 +139,7 @@ class AITextIdentificationModel:
       return weights
     
 
-    class_weights = get_class_weights(y_train) if weight is None else weight
+    class_weights = get_class_weights(y_train) if self.weight is None else self.weight
     class_weights = class_weights.to(self.device)
     criterion = CrossEntropyLoss(weight=class_weights)
 
@@ -178,22 +170,45 @@ class AITextIdentificationModel:
 
     
     def load_checkpoint(model, optimizer):
-      checkpoint_path = hf_hub_download(
-          repo_id=model_name ,
-          filename="checkpoint/checkpoint.pth",
+      try:
+        checkpoint_path = hf_hub_download(
+            repo_id=model_name,
+            filename="checkpoint/checkpoint.pth",
+            repo_type="model",
+        )
+
+        print("🔄 Loading from checkpoint...")
+
+        ckpt = torch.load(checkpoint_path, map_location=self.device)
+        
+        print(f"✅ Checkpoint loaded: Epoch {ckpt['epoch']+1}, Batch {ckpt['batch_idx']+1}")
+        model.load_state_dict(ckpt["model"])
+        optimizer.load_state_dict(ckpt["optimizer"])
+
+        return ckpt["epoch"], ckpt["batch_idx"]
+
+      except Exception as e:
+        print("⚠️ No checkpoint found. Starting from scratch.")
+        return 0, 0
+
+    def remove_checkpoint():
+      api = HfApi()
+      try:
+        api.delete_file(
+          repo_id=model_name,
+          path_in_repo="checkpoint/checkpoint.pth",
           repo_type="model",
-      )
-
-      print("🔄 Loading from checkpoint...")
-
-      ckpt = torch.load(checkpoint_path, map_location=self.device)
-
-      model.load_state_dict(ckpt["model"])
-      optimizer.load_state_dict(ckpt["optimizer"])
-
-      return ckpt["epoch"], ckpt["batch_idx"]
-
-    start_epoch, start_batch = load_checkpoint(self.model, self.optimizer)
+        )
+        print("🗑️ Checkpoint removed successfully.")
+      except Exception as e:
+        print("⚠️ No checkpoint to remove.")
+    
+    if resume:
+      print("🔄 Resuming training from last checkpoint...")
+      start_epoch, start_batch = load_checkpoint(self.model, self.optimizer)
+    else:
+      print("🚀 Starting training from scratch...")
+      start_epoch, start_batch = 0, 0
 
     for epoch in range(start_epoch, self.epochs):
 
@@ -235,16 +250,13 @@ class AITextIdentificationModel:
         total_loss += loss.item()
         total_batches += 1
 
-        if (batch_idx + 1) % 100 == 0:
-          save_checkpoint(self.model, self.optimizer, epoch, batch_idx)
-
       epoch_loss = total_loss / total_batches if total_batches > 0 else 0.0
       print(f"\n✅ Epoch {epoch+1} Completed | Average Loss: {epoch_loss:.4f}\n")
-      last_batch_idx = batch_idx if total_batches > 0 else start_idx - 1
+      last_batch_idx = batch_idx if 'batch_idx' in locals() else start_idx
       save_checkpoint(self.model, self.optimizer, epoch, last_batch_idx)
       start_batch = 0
+    remove_checkpoint()
     self.save_model(self.model, self.optimizer, self.tokenizer)
-    save_checkpoint(self.model, self.optimizer, 0, 0)
   
   def predict_proba(self, text):
     self.model.eval()

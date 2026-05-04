@@ -5,7 +5,7 @@ import os
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 
 model = AITextIdentificationModel()
-model.load_model(for_training=True)
+model.load_model()
 
 data_path = os.path.join(os.path.dirname(__file__), "./data/article_level_data.csv")
 data = pd.read_csv(data_path)
@@ -16,7 +16,7 @@ X = data['article']
 y = data['class']
 
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
-model.fit(X_train, y_train, epochs=3, batch_size=32)
+model.fit(X_train, y_train)
 
 y_true, y_pred = model.evaluate(X_val, y_val)
 
