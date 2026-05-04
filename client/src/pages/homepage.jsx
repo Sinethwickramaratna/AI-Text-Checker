@@ -1,7 +1,12 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 export default function Homepage() {
   const [fileUpload, setFileUpload] = useState(false);
+
   return (
     <>
       <main className="pt-24 min-h-screen">
@@ -68,7 +73,7 @@ export default function Homepage() {
         </section>
         {/* Main Tool Area */}
         {
-          fileUpload ? <FileMainToolArea setFileUpload = {setFileUpload}/> : <TextMainToolArea setFileUpload={setFileUpload}/>
+          fileUpload ? <FileMainToolArea setFileUpload={setFileUpload} /> : <TextMainToolArea setFileUpload={setFileUpload} />
         }
         {/* How It Works Section */}
         <section className="px-8 py-24 bg-surface-dim">
@@ -139,12 +144,37 @@ export default function Homepage() {
   );
 }
 
-function TextMainToolArea({setFileUpload}) {
+function TextMainToolArea({ setFileUpload }) {
+
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [result, setResult] = useState("");
+
+  const handleSubmit = async () => {
+    setError("");
+    setResult("");
+
+    try {
+      const res = await axios.post(`${API_URL}/predict`, {
+        text: text
+      });
+
+      console.log(res.data);
+      setResult(res.data);
+    } catch (error) {
+      if (error.response) {
+        setError(error.response.data.error || "An error occurred while processing your request.");
+      } else {
+        setError("Server not reachable");
+      }
+    }
+  };
+
   return (
     <>
-      <section className="px-8 py-16 bg-surface-container-lowest">
-        <div className="max-w-5xl mx-auto">
-          <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+      <section className="px-3 py-20 bg-surface-container-lowest">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 items-start">
+          <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl w-full lg:flex-1">
             <div className="flex border-b border-white/5 bg-white/5 px-6 py-4 justify-between items-center">
               <div className="flex gap-4">
                 <button className="font-label-caps text-label-caps hover:text-white transition-colors text-primary border-b-2 border-primary pb-1" onClick={() => setFileUpload(false)}>
@@ -161,38 +191,70 @@ function TextMainToolArea({setFileUpload}) {
               </div>
             </div>
             <div className="p-1">
-              <textarea className="w-full h-80 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/50 text-on-surface font-body-md text-body-md p-8 placeholder:text-outline transition-all duration-300 resize-none" placeholder="Enter the text you want to analyze..."></textarea>
+              <textarea
+                className="w-full h-80 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/50 text-on-surface font-body-md text-body-md p-8 placeholder:text-outline transition-all duration-300 resize-none"
+                placeholder="Enter the text you want to analyze..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
             </div>
             <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
               <div className="flex items-center gap-4 text-outline font-body-sm">
-                <span>Words: 0 / 25000</span>
+                <span>Words: {result.word_count || 0} / 1000</span>
                 <span className="w-px h-4 bg-white/10"></span>
                 <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
                   <span className="material-symbols-outlined text-sm" data-icon="cloud_upload">cloud_upload</span>
                   <span>Drop PDF or DOCX here</span>
                 </div>
               </div>
-              <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow">
+              <button
+                className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow"
+                onClick={() => handleSubmit()}
+              >
                 Analyze Text
               </button>
             </div>
           </div>
+          <ResultSection result={result} />
         </div>
       </section>
     </>
   );
 }
 
-function FileMainToolArea({setFileUpload}) {
+function FileMainToolArea({ setFileUpload }) {
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [result, setResult] = useState("");
+
+  const handleSubmit = async () => {
+    setError("");
+    setResult("");
+
+    try {
+      const res = await axios.post(`${API_URL}/predict`, {
+        text: text
+      });
+
+      console.log(res.data);
+      setResult(res.data);
+    } catch (error) {
+      if (error.response) {
+        setError(error.response.data.error || "An error occurred while processing your request.");
+      } else {
+        setError("Server not reachable");
+      }
+    }
+  };
   return (
     <>
-      <section className="px-8 py-16 bg-surface-container-lowest">
-        <div className="max-w-5xl mx-auto">
-          <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+      <section className="px-3 py-20 bg-surface-container-lowest">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 items-start">
+          <div className="glass-panel border border-white/5 rounded-2xl overflow-hidden shadow-2xl w-full lg:flex-1">
             <div className="flex border-b border-white/5 bg-white/5 px-6 py-4 justify-between items-center">
               <div className="flex gap-4">
-                <button className="font-label-caps text-label-caps text-on-surface-variant hover:text-white transition-colors" onClick = {() => setFileUpload(false)}>Paste Text</button>
-                <button className="font-label-caps text-label-caps hover:text-white transition-colors text-primary border-b-2 border-primary pb-1" onClick={()=>setFileUpload(true)}>Upload File</button>
+                <button className="font-label-caps text-label-caps text-on-surface-variant hover:text-white transition-colors" onClick={() => setFileUpload(false)}>Paste Text</button>
+                <button className="font-label-caps text-label-caps hover:text-white transition-colors text-primary border-b-2 border-primary pb-1" onClick={() => setFileUpload(true)}>Upload File</button>
               </div>
               <div className="flex gap-2">
                 <span className="w-3 h-3 rounded-full bg-error/40"></span>
@@ -214,12 +276,95 @@ function FileMainToolArea({setFileUpload}) {
             </div>
             <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
               <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow">
-                Analyze Text
+                Analyze File
               </button>
             </div>
           </div>
+          <ResultSection result={result} />
         </div>
       </section>
+    </>
+  )
+}
+
+function ResultSection({ result }) {
+  const hasResult = result && Object.keys(result).length > 0;
+  return (
+    <>
+      <div className="relative group w-full lg:w-[380px]">
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+        <div className="relative glass-panel rounded-xl p-6 border border-white/10 shadow-2xl">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-h3 text-h3 text-primary">Detection Score</h3>
+          </div>
+          <div className={`flex flex-col items-center py-6 ${hasResult ? result.AI ? 'bg-error-container/15 border-error/30' : 'bg-green-500/15 border-green-400/30' : 'bg-gray-900/60'} rounded-xl border`}>
+            {hasResult ? <ResultVisible result={result} /> : <NoResult />}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function ResultVisible({ result }) {
+  const circumference = 502;
+  const offset = result.AI ? circumference - (result.prediction.ai * circumference) : circumference - (result.prediction.human * circumference);
+  return (
+    <>
+      <div className="flex flex-col items-center py-6">
+        <div className="relative w-48 h-48 mb-10">
+          <svg className="w-full h-full transform -rotate-90">
+            <circle className="text-surface-container-high" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" strokeWidth="8"></circle>
+            <circle cx="96" cy="96" fill="transparent" r="80" stroke="url(#gradient-2)" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" strokeWidth="12" filter={result.AI ? "url(#glow-red)" : "url(#glow-green)"}></circle>
+            <defs>
+              <linearGradient id="gradient-2" x1="0%" x2="100%" y1="0%" y2="0%">
+                <stop offset="0%" stopColor={`${result.AI ? '#ef4444' : '#3cf6cb'}`}></stop>
+                <stop offset="100%" stopColor={`${result.AI ? '#ef4444' : '#08b55e'}`}></stop>
+              </linearGradient>
+              <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="rgb(239,68,68)" floodOpacity="0.8" />
+              </filter>
+
+              <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="rgb(59,246,202)" floodOpacity="0.8" />
+              </filter>
+            </defs>
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-4xl font-bold font-h1">{result.AI ? (result.prediction.ai * 100).toFixed(0) : (result.prediction.human * 100).toFixed(0)}%</span>
+            <span className="text-xs uppercase tracking-widest text-on-surface-variant">{result.AI ? "AI" : "Human"}</span>
+          </div>
+        </div>
+        <span
+          className={`${result.AI
+            ? "bg-error-container/30 text-error border-error/20"
+            : "bg-green-500/20 text-green-400 border-green-400/20"
+            } px-3 py-1 rounded-full text-xs font-bold border`}
+        >
+          {result.AI ? "Likely AI" : "Likely Human"}
+        </span>
+      </div>
+    </>
+  )
+}
+
+function NoResult() {
+  return (
+    <>
+      <div className="flex size-10 items-center justify-center rounded-full bg-muted bg-black/50 mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
+          <path d="M8.25 10.875a2.625 2.625 0 1 1 5.25 0 2.625 2.625 0 0 1-5.25 0Z" />
+          <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.125 4.5a4.125 4.125 0 1 0 2.338 7.524l2.007 2.006a.75.75 0 1 0 1.06-1.06l-2.006-2.007a4.125 4.125 0 0 0-3.399-6.463Z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <div className="text-center">
+        <p>
+          No score yet
+        </p>
+        <p className="text-center font-body-sm text-body-sm text-on-surface-variant">
+          Submit your text to see the analysis results.
+        </p>
+      </div>
     </>
   )
 }
