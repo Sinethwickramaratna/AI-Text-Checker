@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./server/.env
+    volumes:
+      # Persist Hugging Face model and tokenizer downloads between restarts
+      - hf-cache:/cache
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # Pass the backend URL for the frontend build (browser will access this port on host)
+        - VITE_API_URL=http://localhost:8000/api
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  hf-cache:

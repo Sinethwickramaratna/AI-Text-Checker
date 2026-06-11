@@ -1,3 +1,11 @@
+import sys
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 import torch
 from transformers import AutoTokenizer
 from torch.optim import AdamW
@@ -253,7 +261,7 @@ class AITextIdentificationModel:
       epoch_loss = total_loss / total_batches if total_batches > 0 else 0.0
       print(f"\n✅ Epoch {epoch+1} Completed | Average Loss: {epoch_loss:.4f}\n")
       last_batch_idx = batch_idx if 'batch_idx' in locals() else start_idx
-      save_checkpoint(self.model, self.optimizer, epoch, last_batch_idx)
+      #save_checkpoint(self.model, self.optimizer, epoch, last_batch_idx)
       start_batch = 0
     remove_checkpoint()
     self.save_model(self.model, self.optimizer, self.tokenizer)

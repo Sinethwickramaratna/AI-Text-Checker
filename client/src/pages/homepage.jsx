@@ -149,10 +149,16 @@ function TextMainToolArea({ setFileUpload }) {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    if (!text.trim()) {
+      setError("Please enter some text to analyze.");
+      return;
+    }
     setError("");
     setResult("");
+    setLoading(true);
 
     try {
       const res = await axios.post(`${API_URL}/predict`, {
@@ -161,12 +167,15 @@ function TextMainToolArea({ setFileUpload }) {
 
       console.log(res.data);
       setResult(res.data);
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.error || "An error occurred while processing your request.");
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.data) {
+        setError(err.response.data.detail || err.response.data.error || "An error occurred while processing your request.");
       } else {
         setError("Server not reachable");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,28 +199,45 @@ function TextMainToolArea({ setFileUpload }) {
                 <span className="w-3 h-3 rounded-full bg-primary/40"></span>
               </div>
             </div>
+            
+            {error && (
+              <div className="mx-6 mt-6 p-4 bg-error-container/20 border border-error/30 text-error rounded-xl flex items-center gap-3 font-body-sm">
+                <span className="material-symbols-outlined text-lg" data-icon="error">error</span>
+                <span>{error}</span>
+              </div>
+            )}
+
             <div className="p-1">
               <textarea
                 className="w-full h-80 bg-surface-container-low border-none focus:ring-2 focus:ring-primary/50 text-on-surface font-body-md text-body-md p-8 placeholder:text-outline transition-all duration-300 resize-none"
                 placeholder="Enter the text you want to analyze..."
                 value={text}
                 onChange={(e) => setText(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
               <div className="flex items-center gap-4 text-outline font-body-sm">
-                <span>Words: {result.word_count || 0} / 1000</span>
+                <span>Words: {result.word_count || 0} / 100000</span>
                 <span className="w-px h-4 bg-white/10"></span>
-                <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors">
+                <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => setFileUpload(true)}>
                   <span className="material-symbols-outlined text-sm" data-icon="cloud_upload">cloud_upload</span>
-                  <span>Drop PDF or DOCX here</span>
+                  <span>Upload PDF instead</span>
                 </div>
               </div>
               <button
-                className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow"
+                className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => handleSubmit()}
+                disabled={loading}
               >
-                Analyze Text
+                {loading ? (
+                  <>
+                    <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  "Analyze Text"
+                )}
               </button>
             </div>
           </div>
@@ -223,29 +249,106 @@ function TextMainToolArea({ setFileUpload }) {
 }
 
 function FileMainToolArea({ setFileUpload }) {
-  const [text, setText] = useState("");
+  const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const fileInputRef = React.useRef(null);
+
+  const pdfUrl = React.useMemo(() => {
+    return file ? URL.createObjectURL(file) : null;
+  }, [file]);
+
+  React.useEffect(() => {
+    return () => {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [pdfUrl]);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.type !== "application/pdf") {
+        setError("Please upload a PDF file only.");
+        setFile(null);
+        return;
+      }
+      setFile(selectedFile);
+      setError("");
+      setResult("");
+      setShowPreview(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const selectedFile = e.dataTransfer.files[0];
+    if (selectedFile) {
+      if (selectedFile.type !== "application/pdf") {
+        setError("Please upload a PDF file only.");
+        setFile(null);
+        return;
+      }
+      setFile(selectedFile);
+      setError("");
+      setResult("");
+      setShowPreview(false);
+    }
+  };
+
+  const handleBoxClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   const handleSubmit = async () => {
+    if (!file) {
+      setError("Please select a PDF file to analyze.");
+      return;
+    }
     setError("");
     setResult("");
+    setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL}/predict`, {
-        text: text
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await axios.post(`${API_URL}/predict-pdf`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       console.log(res.data);
       setResult(res.data);
-    } catch (error) {
-      if (error.response) {
-        setError(error.response.data.error || "An error occurred while processing your request.");
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.data) {
+        setError(err.response.data.detail || err.response.data.error || "An error occurred while processing your request.");
       } else {
         setError("Server not reachable");
       }
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <>
       <section className="px-3 py-20 bg-surface-container-lowest">
@@ -262,21 +365,130 @@ function FileMainToolArea({ setFileUpload }) {
                 <span className="w-3 h-3 rounded-full bg-primary/40"></span>
               </div>
             </div>
+
+            {error && (
+              <div className="mx-6 mt-6 p-4 bg-error-container/20 border border-error/30 text-error rounded-xl flex items-center gap-3 font-body-sm">
+                <span className="material-symbols-outlined text-lg" data-icon="error">error</span>
+                <span>{error}</span>
+              </div>
+            )}
+
             <div className="p-6">
-              <div className="w-full h-80 bg-surface-container-low/50 border-2 border-dashed border-primary/30 rounded-xl flex flex-col items-center justify-center gap-6 group hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 cursor-pointer">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all"></div>
-                  <span className="material-symbols-outlined text-4xl text-primary relative z-10">cloud_upload</span>
+              {file ? (
+                <div className="w-full h-80 bg-surface-container-low/50 border-2 border-solid border-primary/40 rounded-xl flex flex-col items-center justify-center gap-6 p-6">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center relative">
+                    <span className="material-symbols-outlined text-4xl text-primary relative z-10" data-icon="picture_as_pdf">picture_as_pdf</span>
+                  </div>
+                  <div className="text-center max-w-md">
+                    <p className="font-h3 text-h3 text-on-background mb-1 truncate">{file.name}</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="text-error font-label-caps text-label-caps hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFile(null);
+                      setResult("");
+                      setError("");
+                      setShowPreview(false);
+                    }}
+                    disabled={loading}
+                  >
+                    Remove File
+                  </button>
                 </div>
-                <div className="text-center">
-                  <p className="font-h3 text-h3 text-on-background mb-2">Drag &amp; drop files here or <span className="text-primary">click to browse</span></p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Supported formats: PDF, DOCX, TXT (Max 25MB)</p>
+              ) : (
+                <div 
+                  className={`w-full h-80 bg-surface-container-low/50 border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-primary/30'} rounded-xl flex flex-col items-center justify-center gap-6 group hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 cursor-pointer`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={handleBoxClick}
+                >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept=".pdf" 
+                    onChange={handleFileChange} 
+                  />
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center relative">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all"></div>
+                    <span className="material-symbols-outlined text-4xl text-primary relative z-10" data-icon="cloud_upload">cloud_upload</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-h3 text-h3 text-on-background mb-2">Drag &amp; drop PDF here or <span className="text-primary">click to browse</span></p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Supported format: PDF (Max 25MB)</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {file && (
+              <div className="p-6 border-t border-white/5 bg-white/[0.01]">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="font-body-lg text-primary flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm" data-icon="visibility">visibility</span>
+                    <span>Document Visual Preview</span>
+                  </h4>
+                  <button
+                    type="button"
+                    className="text-primary font-label-caps text-label-caps hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                    onClick={() => setShowPreview(!showPreview)}
+                  >
+                    <span>{showPreview ? "Hide Preview" : "Show Preview"}</span>
+                    <span className="material-symbols-outlined text-sm" data-icon={showPreview ? "keyboard_arrow_up" : "keyboard_arrow_down"}>
+                      {showPreview ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+                    </span>
+                  </button>
+                </div>
+                
+                {showPreview && pdfUrl && (
+                  <div className="w-full h-[500px] rounded-xl overflow-hidden border border-white/10 bg-white shadow-inner">
+                    <iframe
+                      src={pdfUrl}
+                      className="w-full h-full border-none"
+                      title="PDF Document Preview"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {result && result.extracted_text && (
+              <div className="p-6 border-t border-white/5 bg-white/[0.02]">
+                <h4 className="font-body-lg text-primary mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm" data-icon="description">description</span>
+                  <span>Extracted PDF Text</span>
+                </h4>
+                <div className="max-h-60 overflow-y-auto p-4 bg-surface-container-low rounded-xl text-on-surface-variant font-body-sm whitespace-pre-wrap border border-white/5">
+                  {result.extracted_text}
                 </div>
               </div>
-            </div>
+            )}
+
             <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
-              <button className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow">
-                Analyze File
+              <div className="text-outline font-body-sm">
+                {result.word_count ? (
+                  <span>Words: {result.word_count} / 1000</span>
+                ) : (
+                  <span>PDF size limit: 25MB</span>
+                )}
+              </div>
+              <button 
+                className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handleSubmit()}
+                disabled={loading || !file}
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  "Analyze PDF"
+                )}
               </button>
             </div>
           </div>
@@ -284,7 +496,7 @@ function FileMainToolArea({ setFileUpload }) {
         </div>
       </section>
     </>
-  )
+  );
 }
 
 function ResultSection({ result }) {

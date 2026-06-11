@@ -7,3 +7,5 @@ huggingface_hub
 python-dotenv
 fastapi
 uvicorn
+pypdf
+python-multipart
