@@ -1,5 +1,5 @@
 import sys
-if sys.platform == "win32":
+if sys.platform == "win32" or sys.platform == "darwin" or sys.platform == "linux" or sys.platform == "linux2" or sys.platform == "cygwin" or sys.platform == "msys":
     try:
         sys.stdout.reconfigure(encoding='utf-8')
         sys.stderr.reconfigure(encoding='utf-8')
@@ -31,7 +31,7 @@ print("🔑 Hugging Face Token Loaded:", bool(token))
 model_name = os.getenv("HUGGINGFACEHUB_MODEL_NAME")
 
 class AITextIdentificationModel:
-  def __init__(self, epochs=3, max_len=128, batch_size=32, lr=2e-5, weight=None):
+  def __init__(self, epochs=3, max_len=128, batch_size=32, lr=2e-5, weight=None, locally=False):
     torch.manual_seed(42)
     np.random.seed(42)
 
@@ -49,15 +49,19 @@ class AITextIdentificationModel:
     self.weight = weight
     self.optimizer = None
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    self.locally = locally
 
   def load_model(self):
     self.model = BERTClassifier()
     
-    model_path = hf_hub_download(
-        repo_id=model_name,
-        filename="model.pth",
-        repo_type="model",
-    )
+    if self.locally:
+        model_path = os.path.join("mlmodel", "model.pth")
+    else:
+        model_path = hf_hub_download(
+            repo_id=model_name,
+            filename="model.pth",
+            repo_type="model",
+        )
 
     model_data = torch.load(model_path, map_location=self.device)
     

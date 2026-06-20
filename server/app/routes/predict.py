@@ -6,7 +6,7 @@ import io
 from pypdf import PdfReader
 
 router = APIRouter()
-model = AITextIdentificationModel()
+model = AITextIdentificationModel(locally=True)
 model.load_model()
 
 @router.post("/predict")
