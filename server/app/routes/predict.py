@@ -90,11 +90,4 @@ async def predict_pdf(file: UploadFile = File(...)):
         'extracted_text': text,
         'result': 'Success'
     }
-
-@router.options("/predict")
-def options_predict():
-    return Response(status_code=status.HTTP_200_OK)
-
-@router.options("/predict-pdf")
-def options_predict_pdf():
-    return Response(status_code=status.HTTP_200_OK)
+
