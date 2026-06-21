@@ -219,7 +219,7 @@ function TextMainToolArea({ setFileUpload }) {
             </div>
             <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/5">
               <div className="flex items-center gap-4 text-outline font-body-sm">
-                <span>Words: {result.word_count || 0} / 100000</span>
+                <span>Words: {result.word_count || 0} / 1000</span>
                 <span className="w-px h-4 bg-white/10"></span>
                 <div className="flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => setFileUpload(true)}>
                   <span className="material-symbols-outlined text-sm" data-icon="cloud_upload">cloud_upload</span>
