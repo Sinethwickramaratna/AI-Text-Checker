@@ -4,7 +4,7 @@ def add_cors_middleware(app):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
-            "https://ai-text-checker-q67p3mk8q-sineth-wickramaratnas-projects.vercel.app",
+            "https://veritextai.sinethwickramaratna.dev",
             "http://localhost:3000"
         ],  # Allow all origins
         allow_credentials=True,
