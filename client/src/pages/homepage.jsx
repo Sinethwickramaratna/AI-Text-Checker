@@ -162,7 +162,7 @@ function TextMainToolArea({ setFileUpload }) {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API_URL}/predict`, {
+      const res = await axios.post(`${API_URL}/api/predict`, {
         text: text
       });
 
@@ -330,7 +330,7 @@ function FileMainToolArea({ setFileUpload }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post(`${API_URL}/predict-pdf`, formData, {
+      const res = await axios.post(`${API_URL}/api/predict-pdf`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
