@@ -16,7 +16,7 @@ async def predict(input: TextInput):
     isAIGenerated = result['ai'] > 0.5
     
     word_count = len(re.findall(r'\b\w+\b', input.text))
-    if word_count > 100000:
+    if word_count > 1000:
       raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail = f"Word limit exceeded. Maximum allowed is 1000 words, but got {word_count} words."
@@ -68,7 +68,7 @@ async def predict_pdf(file: UploadFile = File(...)):
         )
         
     word_count = len(re.findall(r'\b\w+\b', text))
-    if word_count > 100000:
+    if word_count > 1000:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Word limit exceeded. Maximum allowed is 1000 words, but PDF has {word_count} words."
@@ -90,4 +90,4 @@ async def predict_pdf(file: UploadFile = File(...)):
         'extracted_text': text,
         'result': 'Success'
     }
-
+
