@@ -4,6 +4,7 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
+
 export default function Homepage() {
   const [fileUpload, setFileUpload] = useState(false);
 
@@ -199,7 +200,7 @@ function TextMainToolArea({ setFileUpload }) {
                 <span className="w-3 h-3 rounded-full bg-primary/40"></span>
               </div>
             </div>
-            
+
             {error && (
               <div className="mx-6 mt-6 p-4 bg-error-container/20 border border-error/30 text-error rounded-xl flex items-center gap-3 font-body-sm">
                 <span className="material-symbols-outlined text-lg" data-icon="error">error</span>
@@ -383,8 +384,8 @@ function FileMainToolArea({ setFileUpload }) {
                     <p className="font-h3 text-h3 text-on-background mb-1 truncate">{file.name}</p>
                     <p className="font-body-sm text-body-sm text-on-surface-variant">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="text-error font-label-caps text-label-caps hover:underline"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -399,19 +400,19 @@ function FileMainToolArea({ setFileUpload }) {
                   </button>
                 </div>
               ) : (
-                <div 
+                <div
                   className={`w-full h-80 bg-surface-container-low/50 border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-primary/30'} rounded-xl flex flex-col items-center justify-center gap-6 group hover:border-primary/60 hover:bg-primary/5 transition-all duration-300 cursor-pointer`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={handleBoxClick}
                 >
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept=".pdf" 
-                    onChange={handleFileChange} 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={handleFileChange}
                   />
                   <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center relative">
                     <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all"></div>
@@ -443,7 +444,7 @@ function FileMainToolArea({ setFileUpload }) {
                     </span>
                   </button>
                 </div>
-                
+
                 {showPreview && pdfUrl && (
                   <div className="w-full h-[500px] rounded-xl overflow-hidden border border-white/10 bg-white shadow-inner">
                     <iframe
@@ -455,7 +456,7 @@ function FileMainToolArea({ setFileUpload }) {
                 )}
               </div>
             )}
-            
+
             {result && result.extracted_text && (
               <div className="p-6 border-t border-white/5 bg-white/[0.02]">
                 <h4 className="font-body-lg text-primary mb-3 flex items-center gap-2">
@@ -476,7 +477,7 @@ function FileMainToolArea({ setFileUpload }) {
                   <span>PDF size limit: 25MB</span>
                 )}
               </div>
-              <button 
+              <button
                 className="w-full md:w-auto px-10 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-h3 text-h3 text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg neon-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => handleSubmit()}
                 disabled={loading || !file}
